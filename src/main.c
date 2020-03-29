@@ -1,9 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <GL/gl.h>
 #include <GL/freeglut.h>
 
 #define WINDOW_TITLE "Exercice 1"
+
+char* pathTodata = "src/datas_2";
 
 void initialize(int, char*[]);
 void initWindow(int, char*[]);
@@ -31,7 +34,7 @@ typedef struct _Cube{
 	Point3 corner[8];
 } Cube;
 
-Cube * cube_new();
+Cube* cube_new();
 
 void interpolatePos3(Point3 *, Point3, Point3, double);
 void drawCubeFrom(Point3, double);
@@ -186,7 +189,7 @@ int triangleArray[256][16] ={
 	{8, 9, 6, 8, 6, 7, 9, 1, 6, 11, 6, 3, 1, 3, 6, -1},
 	{0, 9, 1, 11, 6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 	{7, 8, 0, 7, 0, 6, 3, 11, 0, 11, 6, 0, -1, -1, -1, -1},
-	{7, 11, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},//127 <>
+	{7, 11, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 	{7, 6, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 	{3, 0, 8, 11, 7, 6, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1},
 	{0, 1, 9, 11, 7, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},//130
@@ -317,15 +320,17 @@ int triangleArray[256][16] ={
 	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
 };
 
-//int linkedCorner[12][2] = {{0,1},{1,2},{2,3},{3,0},{4,5},{5,6},{7,6},{4,7},{0,4},{1,5},{2,6},{3,7}};
 int linkedCorner[12][2] =   {{0,1},{1,2},{2,3},{3,0},{4,5},{5,6},{7,6},{4,7},{0,4},{1,5},{2,6},{3,7}};
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 int main(int argc,char* argv[]){
+
+	printf("Available Controle:\n\tSpace\n\tf\n\tn\n\t+ / -\n");
+
 	initialize(argc, argv);
 
-	initData("src/datas");
+	initData(pathTodata);
 
 	glutMainLoop();
 
@@ -349,13 +354,17 @@ void initData(char* path){
 	dataArray = malloc(sizeof(Point3) * nb_value);
 	cubeArray = malloc(sizeof(Cube) * (size-1)*(size-1)*(size-1));
 
+	double step = (display_size*2) / (size-1);
 	int i = 0;
 	while(fgets(ch, sizeof(ch), fp) && i < nb_value){
-		dataArray[i].val = atof(ch);
+		dataArray[i].x = step * atof(strtok(ch," ")) - display_size;
+		dataArray[i].y = step * atof(strtok(NULL," ")) - display_size;
+		dataArray[i].z = step * atof(strtok(NULL," ")) - display_size;
+		dataArray[i].val = atof(strtok(NULL," "));
 		i++;
 	}
-	double step = (display_size*2) / (size-1);
-	for (int i = 0 ; i < size ; i++){
+	
+	/*for (int i = 0 ; i < size ; i++){
 		for (int j = 0 ; j < size ; j++){
 			for (int k = 0 ; k < size ; k++){
 				int index = i*size*size+j*size+k ;
@@ -364,21 +373,28 @@ void initData(char* path){
 				dataArray[index].z = step * k - display_size;
  			}
 		}
-	}
+	}*/
 	for (int i = 0 ; i < size-1 ; i++){
 		for (int j = 0 ; j < size-1 ; j++){
 			for (int k = 0 ; k < size-1 ; k++){
-				//printf("%d_%d_%d\n",i,j,k);
 				Cube c;
 				c.corner[0] = dataArray[ (i)*size*size   + (j)*size   + k   ];
-				c.corner[1] = dataArray[ (i+1)*size*size + (j)*size   + k   ];
-				c.corner[2] = dataArray[ (i+1)*size*size + (j)*size   + k+1 ];
-				c.corner[3] = dataArray[ (i)*size*size   + (j)*size   + k+1 ];
-				c.corner[4] = dataArray[ (i)*size*size   + (j+1)*size + k   ];
-				c.corner[5] = dataArray[ (i+1)*size*size + (j+1)*size + k   ];
+				c.corner[1] = dataArray[ (i)*size*size   + (j)*size   + k+1 ];
+				c.corner[2] = dataArray[ (i)*size*size   + (j+1)*size + k+1 ];
+				c.corner[3] = dataArray[ (i)*size*size   + (j+1)*size + k   ];
+				c.corner[4] = dataArray[ (i+1)*size*size + (j)*size   + k   ];
+				c.corner[5] = dataArray[ (i+1)*size*size + (j)*size   + k+1 ];
 				c.corner[6] = dataArray[ (i+1)*size*size + (j+1)*size + k+1 ];
-				c.corner[7] = dataArray[ (i)*size*size   + (j+1)*size + k+1 ];
+				c.corner[7] = dataArray[ (i+1)*size*size + (j+1)*size + k   ];
 				cubeArray[i*(size-1)*(size-1) + j*(size-1) + k] = c;
+				/*printf("%.2f  ",c.corner[0].val);
+				printf("%.2f  ",c.corner[1].val);
+				printf("%.2f  ",c.corner[2].val);
+				printf("%.2f  ",c.corner[3].val);
+				printf("%.2f  ",c.corner[4].val);
+				printf("%.2f  ",c.corner[5].val);
+				printf("%.2f  ",c.corner[6].val);
+				printf("%.2f\n",c.corner[7].val);*/
  			}
 		}
 	}
@@ -437,9 +453,8 @@ void renderFunction(void){
 	for (int i = 0; i < size-1 ;i ++){
 		for (int j = 0; j < size-1 ; j++){
 			for (int k = 0; k < size-1 ; k++){
-				int c_index = i*size*size+j*size+k;
+				int c_index = i*(size-1)*(size-1) + j*(size-1) + k;
 				int *lst_tri = triangleArray[indexCube(cubeArray[c_index], iso)];
-				//printf("%d\n", indexCube(cubeArray[c_index], iso));
 				int cursor = 0;
 				while (cursor < 15 && lst_tri[cursor] != -1){
 					Point3 pts[3];
@@ -451,7 +466,6 @@ void renderFunction(void){
 							cubeArray[c_index].corner[corners[1]],
 							iso
 							);
-						//printf("%.3f_%.3f_%.3f / %.2f\n",pts[l].x,pts[l].y,pts[l].z, pts[l].val);
 					}
 					drawTriangle(pts);
 					cursor +=3;
@@ -474,10 +488,10 @@ void keyboard(unsigned char key, int x, int y){
 			display_filled = (display_filled+1)%2;
 			break;
 		case '+':
-			iso += 0.005;
+			iso += 0.01;
 			break;
 		case '-':
-			iso -= 0.005;
+			iso -= 0.01;
 			break;
 		case 32: // espace
 			display_mode = (display_mode+1)%MAX_MODE;
